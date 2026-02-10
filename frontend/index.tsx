@@ -12,22 +12,32 @@ import { getBasePath } from './config/paths';
 
 const isDevelopment = process.env.NODE_ENV !== 'production';
 
-// Clear out any lingering service workers/caches from other branches (e.g. PWA)
-if (isDevelopment && 'serviceWorker' in navigator) {
-    navigator.serviceWorker.getRegistrations().then((registrations) => {
-        registrations.forEach((registration) => {
-            registration.unregister().catch(() => {
-                // Non-fatal during development cleanup
+if ('serviceWorker' in navigator) {
+    if (isDevelopment) {
+        // Clear out service workers/caches during development
+        navigator.serviceWorker.getRegistrations().then((registrations) => {
+            registrations.forEach((registration) => {
+                registration.unregister().catch(() => {
+                    // Non-fatal during development cleanup
+                });
             });
         });
-    });
 
-    if ('caches' in window) {
-        caches.keys().then((cacheNames) => {
-            cacheNames.forEach((cacheName) => {
-                caches.delete(cacheName).catch(() => {
-                    // Ignore cache cleanup failures during dev
+        if ('caches' in window) {
+            caches.keys().then((cacheNames) => {
+                cacheNames.forEach((cacheName) => {
+                    caches.delete(cacheName).catch(() => {
+                        // Ignore cache cleanup failures during dev
+                    });
                 });
+            });
+        }
+    } else {
+        // Register service worker in production for PWA support
+        window.addEventListener('load', () => {
+            const swPath = (getBasePath() || '') + '/service-worker.js';
+            navigator.serviceWorker.register(swPath).catch(() => {
+                // Service worker registration failed - app will still work without it
             });
         });
     }
