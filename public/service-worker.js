@@ -60,7 +60,8 @@ self.addEventListener('fetch', (event) => {
                 // Revalidate in the background
                 fetch(request)
                     .then((response) => {
-                        caches.open(CACHE_NAME).then((cache) => cache.put(request, response));
+                        const clone = response.clone();
+                        caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
                     })
                     .catch(() => {});
                 return cached;
